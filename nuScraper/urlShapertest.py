@@ -5,10 +5,6 @@ from urlShaper import *
 
 class scraper(unittest.TestCase):
 
-    def test_mockCase(self):
-        cased = mockCase("sandwich")
-        self.assertEqual("sAnDwIcH", cased)
-
     def test_urlParser(self):
         testString = "https://555555555.net/x/5151515151515851321/string-cheese-cut-fridge"
         self.assertEqual(["string", "cheese", "cut", "fridge"], urlParser(testString))
