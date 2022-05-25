@@ -1,64 +1,47 @@
-
 import pyperclip as pc
 import time
+import re
 
-
-def mockCase(string):
-    new_quote = ""
-    i = False
-    for char in string:
-        if i:
-            new_quote += char.upper()
-        else:
-            new_quote += char.lower()
-        if char != ' ':
-            i = not i
-    return new_quote
 
 
 import xml.etree.ElementTree as ET
 tree = ET.parse('test.xml')
 root = tree.getroot()
 
-def objectCreator(arrayOfStrings):
-    keys = ["url", "date", "priority"]
-    # ["dummy URL", "dummy date", 0.80]
-    dictionaryToReturn = {}
-    for i in range(len(keys)):
-        dictionaryToReturn[keys[i]] = arrayOfStrings[i]
-    return dictionaryToReturn
-
 def urlParser(urlString):
-    # removes first 44 chars from URL
+    # removes all chars up to final / (inclusive)
     # splits remaining string by "-" and returns array
-    return urlString[44:].split("-")
+    # . any given character
+    #* iterator searching for . char type to match and consume (greedily, it stops at the final / )
+    # / defines the stopping point
+    # .* new character, iterating forward defined into a new group by ( )
+
+    toReturn = re.compile('.*/(.*)')
+    return toReturn.match(urlString).group(1).split("-")
 
 def objectTagger(obj):
     # add "tags" key with urlParser(obj.url)
     # remove date and priority key/value pairs
-    obj["tags"] = urlParser(obj["url"]) # ["string", "cheese", "cut", "fridge"]
-    [obj.pop(key) for key in ["date", "priority"]]
+    obj["tags"] = urlParser(obj["url"])
     return obj
 
 def controller(xmlFile):
-    # takes root of xml file
-    # each xml.node is parsed into object and pushed to array
-    # {"url": "dummy URL", "date": "dummy date", "priority": 0.80}
+    # takes root of xml file as param
     arrayOfNodeObjects = []
 
     for elem in xmlFile:
-        arrayToParse = []
-        for subelem in elem:
-            arrayToParse.append(subelem.text)
-        arrayOfNodeObjects.append(objectCreator(arrayToParse))
+        # each xml.node is parsed into object and pushed to array
+        # {"url": "dummy URL"}
+        objectToAppend = {"url": elem[0].text}
+        arrayOfNodeObjects.append(objectToAppend)
     result = map(objectTagger, arrayOfNodeObjects)
+    # map through array to split tags and define under "tags" key
+    # {"url": "dummy URL", "tags": ["cheese", "eggs", "ham"]}
     for count, value in enumerate(list(result)):
         print(count, value)
-        time.sleep(3)
+        time.sleep(2)
         pc.copy(value["url"])
+        # every two seconds, loop and copy url to clipboard
 
 controller(root)
 
-arrayOfUrls = ["https://hugelolcdn.com/i/829894.jpg", "https://hugelolcdn.com/i/830048.png", "https://hugelolcdn.com/i/829716.png"]
-
-# it's iterating through a webscraper xml and copying all the urls to my downloader widget
