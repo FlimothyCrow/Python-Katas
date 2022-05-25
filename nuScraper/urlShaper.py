@@ -1,9 +1,8 @@
+
+
 import pyperclip as pc
 import time
 import re
-
-
-
 import xml.etree.ElementTree as ET
 tree = ET.parse('test.xml')
 root = tree.getroot()
@@ -39,9 +38,10 @@ def controller(xmlFile):
     # {"url": "dummy URL", "tags": ["cheese", "eggs", "ham"]}
     for count, value in enumerate(list(result)):
         print(count, value)
+
         time.sleep(2)
         pc.copy(value["url"])
         # every two seconds, loop and copy url to clipboard
 
-controller(root)
+# controller(root)
 
