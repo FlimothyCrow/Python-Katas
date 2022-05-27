@@ -17,9 +17,9 @@ def keywordCounter(fileToRead):
     objOfKeywords = Counter(dataWithoutBrackets)
     # close file
     text_file.close()
-    print("final return " + str(objOfKeywords))
     return objOfKeywords
 
-# objToRepresent = keywordCounter("D:/temporary funnies/listOfAudios.txt")
+
+
 
 
