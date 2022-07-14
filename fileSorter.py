@@ -1,13 +1,6 @@
 import os
 import shutil
 
-# TO DO controller calls flattenDir()
-# TO DO map through files with regex to remove unnecessary punctuation from file names
-#
-# controller calls createDirs() to loop through list of searchStrings and create a directory for each one (no dupes!)
-# TO DO for each new directory, search the newly re-mapped targetDirectory for matches in filenames
-# TO DO for each match, move that file to its new directory
-
 
 def createDirs(targetDirectory, arrayOfStrings):
     for dirString in arrayOfStrings:
@@ -46,9 +39,31 @@ def flattenDir(directory):
             os.rmdir(dirpath)
             print("Deleted ", dirpath)
 
+def fileMover(targetDir, listOfTerms):
+    for term in listOfTerms:
+        for element in os.listdir(targetDir):
+            elementPath = targetDir + "/" + element
+            if os.path.isfile(elementPath):
+                # if element is a file
+                if fileMatcher(element, term):
+                    # if the filename contains the current term
+                    print("moving " + element)
+                    shutil.move(elementPath, str(targetDir + "/" + term))
+
+def sorterController(targetDir, listOfTerms):
+    flattenDir(targetDir)
+    # recursively move all files into targetDir and delete folders
+    createDirs(targetDir, listOfTerms)
+    # create new folders based on search words array
+    fileMover(targetDir, listOfTerms)
+    # moves all matching files into new matching directories
 
 
-# directoryToPrint = 'C:/Users/Timothy/Desktop/TheCrow/target directory'
-# createDirs(directoryToPrint, ["ambush", "mummy", "things", "cat's"])
-# directoryToFlatten = 'C:/Users/Timothy/Desktop/TheCrow/target directory/nostalgia'
-# flattenDir(os.path.dirname(directoryToFlatten))
+directoryToPrint = 'C:/Users/Timothy/Desktop/TheCrow/target directory'
+searchWords = ["ambush", "mummy", "cat's"]
+
+sorterController(directoryToPrint, searchWords)
+# TO DO map through files with regex to remove unnecessary punctuation from file names
+# break file movement into separate function
+# allow for files of same name
+
