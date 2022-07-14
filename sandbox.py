@@ -10,4 +10,4 @@ def mockCase(string):
             i = not i
     return new_quote
 # call mockcase from a front end and autoclipboard for faster mockery
-# print(mockCase("what's the fastest way to invert a binary tree"))
+print(mockCase("sorry i know i'm a bad friend"))
