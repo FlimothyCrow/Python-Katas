@@ -1,11 +1,15 @@
 import os
 import shutil
+import re
+import pathlib
 
+def nameCleaner(strToClean):
+    return re.sub(r'\W+', '', strToClean)
 
-def createDirs(targetDirectory, arrayOfStrings):
+def createDirs(targetDir, arrayOfStrings):
     for dirString in arrayOfStrings:
         # loop through arrayOfStrings
-        newDirectory = targetDirectory + "/" + dirString
+        newDirectory = targetDir + "/" + dirString
         # append dirString onto targetDirectory
         if not os.path.exists(newDirectory):
             os.mkdir(newDirectory)
@@ -39,30 +43,55 @@ def flattenDir(directory):
             os.rmdir(dirpath)
             print("Deleted ", dirpath)
 
-def fileMover(targetDir, listOfTerms):
+
+def matchFinder(listOfFiles, listOfTerms):
+    dictOfCounts = {}
     for term in listOfTerms:
-        for element in os.listdir(targetDir):
-            elementPath = targetDir + "/" + element
-            if os.path.isfile(elementPath):
-                # if element is a file
-                if fileMatcher(element, term):
-                    # if the filename contains the current term
-                    print("moving " + element)
-                    shutil.move(elementPath, str(targetDir + "/" + term))
+        listOfMatches = []
+        for file in listOfFiles:
+            if fileMatcher(file, term):
+                listOfMatches.append(file)
+        # print("adding {} to dictOfCounts".format(term))
+        dictOfCounts[term] = listOfMatches
+    return dictOfCounts
+
+
+def fileCopier(targetDir, dictOfCounts):
+    for key in dictOfCounts.keys():
+        for file in dictOfCounts[key]:
+            filePath = str(targetDir + "/" + file)
+            if os.path.isfile(filePath):
+                print("copying: " + file)
+                shutil.copy(filePath, str(targetDir + "/" + key))
+    return targetDir
+
+
+def fileDeleter(targetDir, dictOfCounts):
+    # only deletes previously copied files, NOT unmatched files
+    for key in dictOfCounts.keys():
+        for file in dictOfCounts[key]:
+            if os.path.isfile(str(targetDir + "/" + file)):
+                print("deleting: " + file)
+                os.remove(str(targetDir + "/" + file))
+    return targetDir
 
 def sorterController(targetDir, listOfTerms):
     flattenDir(targetDir)
     # recursively move all files into targetDir and delete folders
     createDirs(targetDir, listOfTerms)
     # create new folders based on search words array
-    fileMover(targetDir, listOfTerms)
-    # moves all matching files into new matching directories
+    matchedFiles = matchFinder(os.listdir(targetDir), listOfTerms)
+    # returns dictionary of {searchTerm: [arrayOfMatchingFilenames]}
+    fileCopier(targetDir, matchedFiles)
+    # copies all matching files into new matching directories
+    fileDeleter(targetDir, matchedFiles)
+    # deletes old matched copies of files from targetDir
 
 
 targetDirectory = 'C:/Users/Timothy/Desktop/TheCrow/target directory'
 searchWords = ["ambush", "mummy", "cat's"]
 
-sorterController(targetDirectory, searchWords)
+# sorterController(targetDirectory, searchWords)
+# flattenDir(targetDirectory)
+
 # TO DO map through files with regex to remove unnecessary punctuation from file names
-# allow for files of same name
-# if filename contains multiple terms, copy it into each folder
