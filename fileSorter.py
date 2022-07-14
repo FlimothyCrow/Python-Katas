@@ -59,11 +59,10 @@ def sorterController(targetDir, listOfTerms):
     # moves all matching files into new matching directories
 
 
-directoryToPrint = 'C:/Users/Timothy/Desktop/TheCrow/target directory'
+targetDirectory = 'C:/Users/Timothy/Desktop/TheCrow/target directory'
 searchWords = ["ambush", "mummy", "cat's"]
 
-sorterController(directoryToPrint, searchWords)
+sorterController(targetDirectory, searchWords)
 # TO DO map through files with regex to remove unnecessary punctuation from file names
-# break file movement into separate function
 # allow for files of same name
-
+# if filename contains multiple terms, copy it into each folder
