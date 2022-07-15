@@ -1,12 +1,15 @@
 import os
 import shutil
 import re
-import pathlib
+import timeit
 
 def nameCleaner(strToClean):
-    return re.sub(r'\W+', '', strToClean)
+    filename = os.path.splitext(strToClean)[0]
+    extensionStr = os.path.splitext(strToClean)[1]
+    return re.sub(r'\W+', '', filename).replace('_1', '') + extensionStr
 
 def createDirs(targetDir, arrayOfStrings):
+
     for dirString in arrayOfStrings:
         # loop through arrayOfStrings
         newDirectory = targetDir + "/" + dirString
@@ -19,7 +22,7 @@ def createDirs(targetDir, arrayOfStrings):
             print("SKIPPING {}".format(newDirectory))
 
 def fileMatcher(targetString, substring):
-    if substring in targetString:
+    if substring.lower() in targetString.lower():
         return True
     else:
         return False
@@ -57,11 +60,14 @@ def matchFinder(listOfFiles, listOfTerms):
 
 
 def fileCopier(targetDir, dictOfCounts):
+    count = 0
     for key in dictOfCounts.keys():
         for file in dictOfCounts[key]:
             filePath = str(targetDir + "/" + file)
+            # filePath is defined BEFORE the file is copied
             if os.path.isfile(filePath):
-                print("copying: " + file)
+                count += 1
+                print("copying {}: ".format(count) + file)
                 shutil.copy(filePath, str(targetDir + "/" + key))
     return targetDir
 
@@ -75,23 +81,39 @@ def fileDeleter(targetDir, dictOfCounts):
                 os.remove(str(targetDir + "/" + file))
     return targetDir
 
-def sorterController(targetDir, listOfTerms):
-    flattenDir(targetDir)
+def sorterController(targetDir, listOfTerms, flattenBoolean):
+    start = timeit.default_timer()
+    # start timer
+    filteredListOfTerms = []
+    [filteredListOfTerms.append(x) for x in listOfTerms if x not in filteredListOfTerms]
+    # checking for duplicates in listOfTerms
+    if flattenBoolean:
+        flattenDir(targetDir)
     # recursively move all files into targetDir and delete folders
-    createDirs(targetDir, listOfTerms)
+    createDirs(targetDir, filteredListOfTerms)
     # create new folders based on search words array
-    matchedFiles = matchFinder(os.listdir(targetDir), listOfTerms)
+    matchedFiles = matchFinder(os.listdir(targetDir), filteredListOfTerms)
     # returns dictionary of {searchTerm: [arrayOfMatchingFilenames]}
     fileCopier(targetDir, matchedFiles)
     # copies all matching files into new matching directories
     fileDeleter(targetDir, matchedFiles)
     # deletes old matched copies of files from targetDir
+    end = timeit.default_timer()
+    # stop timer
+    print("total time elapsed: " + str(end - start))
+    print("directories created: " + str(len(filteredListOfTerms)))
 
-
-targetDirectory = 'C:/Users/Timothy/Desktop/TheCrow/target directory'
-searchWords = ["ambush", "mummy", "cat's"]
-
-# sorterController(targetDirectory, searchWords)
+# targetDirectory = 'C:/Users/Timothy/Desktop/TheCrow/target directory'
+# searchWords = ["ambush", "mummy", "cat's", "mummy"]
+# sorterController(targetDirectory, searchWords, True)
 # flattenDir(targetDirectory)
 
-# TO DO map through files with regex to remove unnecessary punctuation from file names
+
+# TO DO set up helper to map through files with regex BEFORE copying
+# TO DO create new folders up one directory, or move them at the end
+# TO DO delete pre-copied duplicates based on filesize, hash?
+# what happens if I put "a multiple word string" in as a search term?
+# total count of duplications created, unwanted duplicates removed
+# undo button?
+# BUG all copies are arriving with _1
+# BUG program crashes sometimes on "file doesn't exist" errors
