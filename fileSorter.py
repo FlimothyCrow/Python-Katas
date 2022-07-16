@@ -2,6 +2,7 @@ import os
 import shutil
 import re
 import timeit
+import hashlib
 
 def nameCleaner(strToClean):
     filename = os.path.splitext(strToClean)[0]
@@ -17,6 +18,27 @@ def directorySanitizer(dirString):
         dst = dirString + "/" + nameCleaner(file)
         os.rename(src, dst)
 
+
+def md5(filename):
+    hash_md5 = hashlib.md5()
+    with open(filename, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
+
+
+def removeDuplicates(targetDir):
+    unique = []
+    files = os.listdir(targetDir)
+    for file in files:
+        filePath = targetDir + "/" + file
+        if os.path.isfile(filePath):
+            filehash = md5(filePath)
+            if filehash not in unique:
+                unique.append(filehash)
+            else:
+                print("deleting " + filePath)
+                os.remove(filePath)
 
 
 def createDirs(targetDir, arrayOfStrings):
@@ -93,6 +115,7 @@ def fileDeleter(targetDir, dictOfCounts):
                 os.remove(str(targetDir + "/" + file))
     return targetDir
 
+
 def sorterController(targetDir, listOfTerms, flattenBoolean):
     start = timeit.default_timer()
     # start timer
@@ -102,6 +125,8 @@ def sorterController(targetDir, listOfTerms, flattenBoolean):
     if flattenBoolean:
         flattenDir(targetDir)
     # recursively move all files into targetDir and delete folders
+    removeDuplicates(targetDir)
+    # delete all checksum-identical files
     directorySanitizer(targetDir)
     # loops through flattened directory and runs each file through nameCleaner()
     createDirs(targetDir, filteredListOfTerms)
@@ -118,14 +143,15 @@ def sorterController(targetDir, listOfTerms, flattenBoolean):
     print("directories created: " + str(len(filteredListOfTerms)))
 
 targetDirectory = 'C:/Users/Timothy/Desktop/TheCrow/target directory'
-# searchWords = ["ambush", "mummy", "cat's", "mummy"]
+searchWords = ["ambush", "mummy", "cat's", "mummy"]
 # sorterController(targetDirectory, searchWords, True)
 # flattenDir(targetDirectory)
 # directorySanitizer(targetDirectory)
+# md5(targetDirectory + "/" + "cat.png")
+# removeDuplicates(targetDirectory)
 
-# TO DO set up helper to map through files with regex BEFORE copying
+
 # TO DO create new folders up one directory, or move them at the end
-# TO DO delete pre-copied duplicates based on filesize, hash?
 # what happens if I put "a multiple word string" in as a search term?
 # total count of duplications created, unwanted duplicates removed
 # undo button?
