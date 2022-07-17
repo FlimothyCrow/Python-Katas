@@ -10,13 +10,29 @@ def nameCleaner(strToClean):
     return re.sub(r'\W+', '', filename).replace('_1', '') + extensionStr
 
 
-def directorySanitizer(dirString):
+def directorySanitizer(targetDir):
+    # removes duplicate files and renames remaining files
     counter = 0
-    for file in os.listdir(dirString):
-        counter += 1
-        src = dirString + "/" + file
-        dst = dirString + "/" + nameCleaner(file)
-        os.rename(src, dst)
+    unique = []
+    files = os.listdir(targetDir)
+    for file in files:
+        # loop through all elements in directory
+        filePath = targetDir + "/" + file
+        if os.path.isfile(filePath):
+            # if path is a file, clean its name string
+            counter += 1
+            filehash = md5(filePath)
+            # get unique ID
+            src = filePath
+            dst = targetDir + "/" + nameCleaner(file)
+            os.rename(src, dst)
+            # rename with new cleaned string
+            if filehash not in unique:
+                unique.append(filehash)
+            else:
+                print("deleting " + filePath)
+                os.remove(dst)
+                # deletes matched duplicate using new cleaned string filepath
 
 
 def md5(filename):
@@ -25,20 +41,6 @@ def md5(filename):
         for chunk in iter(lambda: f.read(4096), b""):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
-
-
-def removeDuplicates(targetDir):
-    unique = []
-    files = os.listdir(targetDir)
-    for file in files:
-        filePath = targetDir + "/" + file
-        if os.path.isfile(filePath):
-            filehash = md5(filePath)
-            if filehash not in unique:
-                unique.append(filehash)
-            else:
-                print("deleting " + filePath)
-                os.remove(filePath)
 
 
 def createDirs(targetDir, arrayOfStrings):
@@ -125,7 +127,6 @@ def sorterController(targetDir, listOfTerms, flattenBoolean):
     if flattenBoolean:
         flattenDir(targetDir)
     # recursively move all files into targetDir and delete folders
-    removeDuplicates(targetDir)
     # delete all checksum-identical files
     directorySanitizer(targetDir)
     # loops through flattened directory and runs each file through nameCleaner()
@@ -144,14 +145,18 @@ def sorterController(targetDir, listOfTerms, flattenBoolean):
 
 targetDirectory = 'C:/Users/Timothy/Desktop/TheCrow/target directory'
 searchWords = ["ambush", "mummy", "cat's", "mummy"]
+
 # sorterController(targetDirectory, searchWords, True)
+
 # flattenDir(targetDirectory)
 # directorySanitizer(targetDirectory)
 # md5(targetDirectory + "/" + "cat.png")
 # removeDuplicates(targetDirectory)
 
 
+
 # TO DO create new folders up one directory, or move them at the end
+# TO DO directorySanitizer() and removeDuplicates() could be done in one loop
 # what happens if I put "a multiple word string" in as a search term?
 # total count of duplications created, unwanted duplicates removed
 # undo button?
