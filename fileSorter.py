@@ -7,7 +7,7 @@ import hashlib
 def nameCleaner(strToClean):
     filename = os.path.splitext(strToClean)[0]
     extensionStr = os.path.splitext(strToClean)[1]
-    return re.sub(r'\W+', '', filename).replace('_1', '') + extensionStr
+    return re.sub(r'[^a-zA-Z0-9 \']+', '', filename).strip() + extensionStr
 
 
 def directorySanitizer(targetDir):
@@ -63,22 +63,22 @@ def fileMatcher(targetString, substring):
         return False
 
 
-def flattenDir(directory):
-    for dirpath, _, filenames in os.walk(directory, topdown=False):
+def flattenDir(srcDir, targetDir):
+    for dirpath, _, filenames in os.walk(srcDir, topdown=False):
         for filename in filenames:
             i = 0
             source = os.path.join(dirpath, filename)
-            target = os.path.join(directory, filename)
+            target = os.path.join(targetDir, filename)
             while os.path.exists(target):
                 i += 1
                 file_parts = os.path.splitext(os.path.basename(filename))
                 target = os.path.join(
-                    directory,
+                    targetDir,
                     file_parts[0] + "_" + str(i) + file_parts[1],
                 )
             shutil.move(source, target)
             print("Moved ", source, " to ", target)
-        if dirpath != directory:
+        if dirpath != srcDir:
             os.rmdir(dirpath)
             print("Deleted ", dirpath)
 
@@ -118,14 +118,14 @@ def fileDeleter(targetDir, dictOfCounts):
     return targetDir
 
 
-def sorterController(targetDir, listOfTerms, flattenBoolean):
+def sorterController(srcDirectory, targetDir, listOfTerms, flattenBoolean):
     start = timeit.default_timer()
     # start timer
     filteredListOfTerms = []
     [filteredListOfTerms.append(x) for x in listOfTerms if x not in filteredListOfTerms]
     # checking for duplicates in listOfTerms
     if flattenBoolean:
-        flattenDir(targetDir)
+        flattenDir(srcDirectory, targetDir)
     # recursively move all files into targetDir and delete folders
     # delete all checksum-identical files
     directorySanitizer(targetDir)
@@ -143,22 +143,22 @@ def sorterController(targetDir, listOfTerms, flattenBoolean):
     print("total time elapsed: " + str(end - start))
     print("directories created: " + str(len(filteredListOfTerms)))
 
-targetDirectory = 'C:/Users/Timothy/Desktop/TheCrow/target directory'
+targetDirectory = 'C:/Users/Timothy/Desktop/TheCrow/integration/target'
+sourceDirectory = 'C:/Users/Timothy/Desktop/TheCrow/integration/source'
 searchWords = ["ambush", "mummy", "cat's", "mummy"]
 
-# sorterController(targetDirectory, searchWords, True)
+# sorterController(sourceDirectory, targetDirectory, searchWords, True)
 
 # flattenDir(targetDirectory)
 # directorySanitizer(targetDirectory)
 # md5(targetDirectory + "/" + "cat.png")
 # removeDuplicates(targetDirectory)
 
+# to clean directory:
+    # open git bash
+    # cd Desktop/TheCrow/integration
+    # ./clean.sh
 
-
-# TO DO create new folders up one directory, or move them at the end
-# TO DO directorySanitizer() and removeDuplicates() could be done in one loop
 # what happens if I put "a multiple word string" in as a search term?
 # total count of duplications created, unwanted duplicates removed
-# undo button?
-# BUG all copies are arriving with _1
 # BUG program crashes sometimes on "file doesn't exist" errors
