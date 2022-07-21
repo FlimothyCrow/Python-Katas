@@ -7,12 +7,12 @@ import hashlib
 def nameCleaner(strToClean):
     filename = os.path.splitext(strToClean)[0]
     extensionStr = os.path.splitext(strToClean)[1]
+    print("name cleaning " + filename)
     return re.sub(r'[^a-zA-Z0-9 \']+', '', filename).strip() + extensionStr
 
 
 def directorySanitizer(targetDir):
     # removes duplicate files and renames remaining files
-    counter = 0
     unique = []
     files = os.listdir(targetDir)
     for file in files:
@@ -20,7 +20,6 @@ def directorySanitizer(targetDir):
         filePath = targetDir + "/" + file
         if os.path.isfile(filePath):
             # if path is a file, clean its name string
-            counter += 1
             filehash = md5(filePath)
             # get unique ID
             src = filePath
@@ -29,6 +28,7 @@ def directorySanitizer(targetDir):
             # rename with new cleaned string
             if filehash not in unique:
                 unique.append(filehash)
+                print("validating " + file)
             else:
                 print("deleting " + filePath)
                 os.remove(dst)
@@ -88,6 +88,7 @@ def matchFinder(listOfFiles, listOfTerms):
     for term in listOfTerms:
         listOfMatches = []
         for file in listOfFiles:
+            print("checking " + str(file))
             if fileMatcher(file, term):
                 listOfMatches.append(file)
         # print("adding {} to dictOfCounts".format(term))
@@ -118,47 +119,66 @@ def fileDeleter(targetDir, dictOfCounts):
     return targetDir
 
 
-def sorterController(srcDirectory, targetDir, listOfTerms, flattenBoolean):
+def sorterController(srcDirectory, targetDir, listOfTerms, flattenBoolean, sanitizeBoolean):
+    # sC() can still be used to flatten and sanitize without listOfTerms
     start = timeit.default_timer()
     # start timer
     filteredListOfTerms = []
-    [filteredListOfTerms.append(x) for x in listOfTerms if x not in filteredListOfTerms]
-    # checking for duplicates in listOfTerms
+    if listOfTerms:
+        [filteredListOfTerms.append(x) for x in listOfTerms if x not in filteredListOfTerms]
+        # checking for duplicates in listOfTerms
     if flattenBoolean:
         flattenDir(srcDirectory, targetDir)
-    # recursively move all files into targetDir and delete folders
-    # delete all checksum-identical files
-    directorySanitizer(targetDir)
-    # loops through flattened directory and runs each file through nameCleaner()
-    createDirs(targetDir, filteredListOfTerms)
-    # create new folders based on search words array
-    matchedFiles = matchFinder(os.listdir(targetDir), filteredListOfTerms)
-    # returns dictionary of {searchTerm: [arrayOfMatchingFilenames]}
-    fileCopier(targetDir, matchedFiles)
-    # copies all matching files into new matching directories
-    fileDeleter(targetDir, matchedFiles)
-    # deletes old matched copies of files from targetDir
+        # recursively move ALL files into targetDir and delete folders
+        # delete all checksum-identical files
+    if sanitizeBoolean:
+        directorySanitizer(targetDir)
+        # loops through flattened directory
+        # runs each file through nameCleaner()
+        # runs each file through md5() and deletes duplicates
+    if filteredListOfTerms:
+        createDirs(targetDir, filteredListOfTerms)
+        # create new folders based on search words array
+        matchedFiles = matchFinder(os.listdir(targetDir), filteredListOfTerms)
+        # returns dictionary of {searchTerm: [arrayOfMatchingFilenames]}
+        fileCopier(targetDir, matchedFiles)
+        # copies all matching files from targetDir into new matching directories
+        fileDeleter(targetDir, matchedFiles)
+        # deletes old matched copies of files from targetDir
     end = timeit.default_timer()
     # stop timer
     print("total time elapsed: " + str(end - start))
-    print("directories created: " + str(len(filteredListOfTerms)))
+    if filteredListOfTerms:
+        print("directories created: " + str(len(filteredListOfTerms)))
 
-targetDirectory = 'C:/Users/Timothy/Desktop/TheCrow/integration/target'
-sourceDirectory = 'C:/Users/Timothy/Desktop/TheCrow/integration/source'
-searchWords = ["ambush", "mummy", "cat's", "mummy"]
+# INTEGRATION TEST BLOCK
+    # targetDirectory = 'C:/Users/Timothy/Desktop/TheCrow/integration/target'
+    # sourceDirectory = 'C:/Users/Timothy/Desktop/TheCrow/integration/source'
+    # searchWords = ["ambush", "mummy", "cat's"]
+    # sorterController(sourceDirectory, targetDirectory, searchWords, True)
 
-# sorterController(sourceDirectory, targetDirectory, searchWords, True)
+
+
+
 
 # flattenDir(targetDirectory)
 # directorySanitizer(targetDirectory)
 # md5(targetDirectory + "/" + "cat.png")
 # removeDuplicates(targetDirectory)
 
-# to clean directory:
+# to clean integration test directory:
     # open git bash
     # cd Desktop/TheCrow/integration
     # ./clean.sh
 
 # what happens if I put "a multiple word string" in as a search term?
-# total count of duplications created, unwanted duplicates removed
-# BUG program crashes sometimes on "file doesn't exist" errors
+# what happens to files that are already in targetDir?
+# total count of files moved, copied, duplicates found, renamed
+# optional arguments: [list of words to delete file if matched], boolean to check for duplicates
+# put totalFilesCount along with prints as "progress bar"
+
+# refactor matchFinder() loop order as: (put time tester on this to show improvement)
+    # for file in files:
+        # for term in terms:
+            # if term in file:
+                # copy file to termDirectory
