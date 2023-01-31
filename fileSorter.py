@@ -119,23 +119,25 @@ def fileDeleter(targetDir, dictOfCounts):
     return targetDir
 
 
-def sorterController(srcDirectory, targetDir, listOfTerms, flattenBoolean, sanitizeBoolean):
+def sorterController(srcDirectory, targetDir, listOfTerms, sanitizeBoolean):
     # sC() can still be used to flatten and sanitize without listOfTerms
     start = timeit.default_timer()
     # start timer
     filteredListOfTerms = []
+    flattenDir(srcDirectory, targetDir)
+    # recursively move ALL files into targetDir and delete folders
+    # delete all checksum-identical files
+
     if listOfTerms:
         [filteredListOfTerms.append(x) for x in listOfTerms if x not in filteredListOfTerms]
         # checking for duplicates in listOfTerms
-    if flattenBoolean:
-        flattenDir(srcDirectory, targetDir)
-        # recursively move ALL files into targetDir and delete folders
-        # delete all checksum-identical files
+
     if sanitizeBoolean:
         directorySanitizer(targetDir)
         # loops through flattened directory
         # runs each file through nameCleaner()
         # runs each file through md5() and deletes duplicates
+
     if filteredListOfTerms:
         createDirs(targetDir, filteredListOfTerms)
         # create new folders based on search words array
@@ -145,6 +147,7 @@ def sorterController(srcDirectory, targetDir, listOfTerms, flattenBoolean, sanit
         # copies all matching files from targetDir into new matching directories
         fileDeleter(targetDir, matchedFiles)
         # deletes old matched copies of files from targetDir
+
     end = timeit.default_timer()
     # stop timer
     print("total time elapsed: " + str(end - start))
@@ -152,12 +155,17 @@ def sorterController(srcDirectory, targetDir, listOfTerms, flattenBoolean, sanit
         print("directories created: " + str(len(filteredListOfTerms)))
 
 # INTEGRATION TEST BLOCK
-    # targetDirectory = 'C:/Users/Timothy/Desktop/TheCrow/integration/target'
-    # sourceDirectory = 'C:/Users/Timothy/Desktop/TheCrow/integration/source'
-    # searchWords = ["ambush", "mummy", "cat's"]
-    # sorterController(sourceDirectory, targetDirectory, searchWords, True)
+#     targetDirectory = 'C:/Users/Timothy/Desktop/TheCrow/integration/target'
+#     sourceDirectory = 'C:/Users/Timothy/Desktop/TheCrow/integration/source'
+#     searchWords = ["ambush", "mummy", "cat's"]
+#     sorterController(sourceDirectory, targetDirectory, searchWords, True, True)
 
 
+
+src  = "example/directory0"
+target = "example/directory1"
+streamWords = ["example0", "example1"]
+sorterController(src, target, streamWords, False)
 
 
 
@@ -171,6 +179,9 @@ def sorterController(srcDirectory, targetDir, listOfTerms, flattenBoolean, sanit
     # cd Desktop/TheCrow/integration
     # ./clean.sh
 
+# BUG: some filenames are "too long"
+# reconfigure loops in matchFinder
+# files with / fail out, run sanitizer first
 # what happens if I put "a multiple word string" in as a search term?
 # what happens to files that are already in targetDir?
 # total count of files moved, copied, duplicates found, renamed
